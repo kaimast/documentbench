@@ -43,7 +43,7 @@ class YCSBCore(Experiment):
     RECORD_COUNT    = Parameter(1000000)
     OPERATION_COUNT = Parameter(1000000)
     DATABASE        = Parameter('org.hyperdex.ycsb.HyperDex')
-    THREADS         = Parameter(64)
+    YCSBTHREADS     = Parameter(64)
 
     JAVA_ARGS       = Environment('')
     WORKLOADS       = Environment('workload')
@@ -89,7 +89,7 @@ class YCSBCore(Experiment):
         cmdline += ['-p', 'recordcount=%d'%self.RECORD_COUNT.as_int()]
         cmdline += ['-p', 'hyperdex.host=%s'%self.HYPERDEX_HOST]
         cmdline += ['-p', 'hyperdex.port=%s'%self.HYPERDEX_PORT]
-        cmdline += ['-threads', self.THREADS]
+        cmdline += ['-threads', self.YCSBTHREADS]
         return cmdline
 
     def _load(self, workload):
