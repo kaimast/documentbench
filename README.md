@@ -5,7 +5,7 @@ Microbenchmarks for MongoDB and HyperDex.
 
 HowTo:
 ------
-# Start MongoDB/Hyperdex daemon
-# Run the python scripts
-# Drink Coffee
-# Look at the console output
+1. Start MongoDB/Hyperdex daemon
+2. Run the python scripts
+3. Drink Coffee
+4. Look at the console output
