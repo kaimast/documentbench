@@ -1,7 +1,6 @@
 import sys
 import functools
 import time
-import pymongo
 
 from functools import partial
 from hyperdex.mongo import HyperDatabase, HyperSpace 
@@ -10,34 +9,32 @@ from common.timer import Timer
 from common.random_access import get_random_accesses
 from common.docbuilder import create_document
 from common.globals import NumCalls, NumWarmup, NumDocuments, EntryPrefix
+from bulk_insert import BulkInserter
 
-class MongoBulkBench:
+class HyperdexBench:
         def setup(self, addr, port):
-                self.client = pymongo.MongoClient(addr, port)
-                self.db = self.client.test
+                self.db = HyperDatabase(addr, port)
+                self.space = self.db.bench
     
         def prepare(self):
-                insert_bulk = self.db.bench.initialize_unordered_bulk_op()
-
-                for i in range(NumDocuments):
-                        insert_bulk.insert(create_document(EntryPrefix, i))
-               
-                insert_bulk.execute( { 'w' : 1 } )
-
+                generator = partial(create_document, EntryPrefix)
+                bulk_inserter = BulkInserter(NumDocuments, self.space, generator)
+                bulk_inserter.run()
 
         def clean(self):
-                self.db.bench.remove({})
+                self.space.clear()
 
         def warmup(self):
                 pendingOps = []
                 accesses = get_random_accesses(NumWarmup)
 
-                self.bulk_op = self.db.bench.initialize_unordered_bulk_op()
-
                 for i in accesses:
-                        self.do_bench_call(i)
+                        p = self.do_bench_call(i)
+                        pendingOps.append(p)
 
-	        self.bulk_op.execute({'w' : 1 })
+                while len(pendingOps) > 0:
+                        pendingOps[0].wait()
+                        pendingOps.pop(0)
 
         def run(self):
                 pendingOps = []
@@ -46,11 +43,12 @@ class MongoBulkBench:
                 timer = Timer()
                 timer.start()
 
-                self.bulk_op = self.db.bench.initialize_unordered_bulk_op()
-
                 for i in accesses:
-                        self.do_bench_call(i)
+                        p = self.do_bench_call(i)
+                        pendingOps.append(p)
 
-	        self.bulk_op.execute({'w' : 1 })
+                while len(pendingOps) > 0:
+                        pendingOps[0].wait()
+                        pendingOps.pop(0)
 
                 return timer.stop()
