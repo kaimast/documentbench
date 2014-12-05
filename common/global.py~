@@ -1,0 +1,9 @@
+
+# How Many Calls are made per run?
+NumCalls = 1000
+
+# How many documents are in the database initially? 
+NumDocuments = 100*1000
+
+assert numDocuments > 0
+assert numCalls < numDocuments

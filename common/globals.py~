@@ -1,0 +1,17 @@
+# How Many Calls are made per run?
+NumCalls = 1000
+
+# How Many Warm-up Calls are made per run?
+NumWarmup = 100
+
+# How many documents are in the database initially? 
+NumDocuments = 100*1000
+
+# How many runs per benchmark? 
+NumRuns = 20 
+
+EntryPrefix = "entry"
+
+assert EntryPrefix != ""
+assert NumDocuments > 0
+assert NumCalls+NumWarmup < NumDocuments
