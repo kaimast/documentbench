@@ -9,4 +9,4 @@ class DeleteDocument(MongoBulkBench):
                 self.bulk_op.delete({'_id' : EntryPrefix + str(i)})
 
         def name(self): 
-                return "Atomic Add"
+                return "Delete Document"
