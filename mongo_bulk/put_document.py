@@ -1,6 +1,7 @@
 #! /usr/bin/python
 
 from mongo_bulk.mongo_bulk_bench import MongoBulkBench
+from common.docbuilder import create_document
 from common.globals import NewEntryPrefix
 
 # Run
@@ -10,4 +11,4 @@ class PutDocument(MongoBulkBench):
                 bulk_op.insert(doc)
 
         def name(self): 
-                return "Atomic Add"
+                return "Put Document"
