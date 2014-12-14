@@ -10,4 +10,4 @@ class PutDocument(MongoBulkBench):
                 bulk_op.insert(doc)
 
         def name(self): 
-                return "Atomic Add"
+                return "Put Document"
