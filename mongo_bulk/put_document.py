@@ -1,6 +1,7 @@
 #! /usr/bin/python
 
 from mongo_bulk.mongo_bulk_bench import MongoBulkBench
+from common.docbuilder import create_document
 from common.globals import NewEntryPrefix
 
 # Run
