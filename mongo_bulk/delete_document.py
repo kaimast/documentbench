@@ -6,7 +6,7 @@ from common.globals import EntryPrefix
 # Run
 class DeleteDocument(MongoBulkBench):
         def do_bench_call(self, i):
-                self.bulk_op.delete({'_id' : EntryPrefix + str(i)})
+                self.bulk_op.find({'_id' : EntryPrefix + str(i)}).remove()
 
         def name(self): 
                 return "Delete Document"
