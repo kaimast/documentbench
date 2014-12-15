@@ -7,16 +7,17 @@ from common.globals import NumRuns
 from sys import argv
 from time import sleep
 
+if len(argv) != 4:
+     raise ValueError('Wrong amount of arguments given')
+
 address = argv[1]
 port = int(argv[2])
-
-if len(argv) is not 3:
-        raise ValueError("Wrong amount of arguments given!")
+writes = int(argv[3])
 
 def run_bench(bench):
      print bench.name()
 
-     bench.setup(address, port)
+     bench.setup(address, port, writes)
      bench.clean()
 
      for n in range(0, NumRuns, 1):

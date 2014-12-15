@@ -8,7 +8,7 @@ from common.globals import NewEntryPrefix
 class PutDocument(MongoBulkBench):
         def do_bench_call(self, i):
                 doc = create_document(NewEntryPrefix, i)
-                bulk_op.insert(doc)
+                self.bulk_op.insert(doc)
 
         def name(self): 
                 return "Put Document"
