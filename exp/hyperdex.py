@@ -33,14 +33,6 @@ class HyperDex(Experiment):
         self.DAEMONS.run(('rm', '-rf', 'daemon-data'), status=None)
 
     @Utility
-    def stop(self):
-        self.DAEMONS.run(('pkill', 'hyperdex'), status=None)
-        time.sleep(1)
-        self.COORDINATORS.run(('pkill', 'replicant'), status=None)
-        time.sleep(1)
-        self.COORDINATOR.run(('pkill', 'replicant'), status=None)
-
-    @Utility
     def start(self):
         self.COORDINATOR.run(('mkdir', '-p', 'coord-data'))
         self.COORDINATOR.run(('hyperdex', 'coordinator',
@@ -59,6 +51,5 @@ class HyperDex(Experiment):
 
     @Utility
     def reset(self):
-        self.stop()
         self.clean()
         self.start()
