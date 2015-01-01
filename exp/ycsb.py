@@ -43,12 +43,14 @@ class YCSBCore(Experiment):
     RECORD_COUNT    = Parameter(1000000)
     OPERATION_COUNT = Parameter(1000000)
     DATABASE        = Parameter('org.hyperdex.ycsb.HyperDex')
-    YCSBTHREADS     = Parameter(64)
+    YCSBTHREADS     = Parameter(50)
 
     JAVA_ARGS       = Environment('')
-    WORKLOADS       = Environment('workload')
+    WORKLOADS       = Environment('workloads')
     HYPERDEX_HOST   = Environment('localhost')
     HYPERDEX_PORT   = Environment('1982')
+    MONGODB_URL     = Environment('mongodb://localhost:27017')
+    MONGODB_WRITEC  = Environment('normal')
 
     CLIENTS = HostSet('clients')
 
@@ -89,6 +91,8 @@ class YCSBCore(Experiment):
         cmdline += ['-p', 'recordcount=%d'%self.RECORD_COUNT.as_int()]
         cmdline += ['-p', 'hyperdex.host=%s'%self.HYPERDEX_HOST]
         cmdline += ['-p', 'hyperdex.port=%s'%self.HYPERDEX_PORT]
+        cmdline += ['-p', 'mongodb.url=%s'%self.MONGODB_URL]
+        cmdline += ['-p', 'mongodb.writeConcern=%s'%self.MONGODB_WRITEC]
         cmdline += ['-threads', self.YCSBTHREADS]
         return cmdline
 
