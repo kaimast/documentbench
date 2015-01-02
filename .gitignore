@@ -1,4 +1,6 @@
 *.pyc
 /src/documentbench/benchmark.dat.bz2
+/src/documentbench/BSONAtomicAdd
 /src/documentbench/BSONConversion
+/src/documentbench/TreadstoneAtomicAdd
 /src/documentbench/TreadstoneConversion

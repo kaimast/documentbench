@@ -27,18 +27,13 @@
 #include <e/guard.h>
 #include <treadstone.h>
 #include <ygor.h>
-#include "conversion.h"
+#include "atomic_add.h"
 
 int
-treadstone_convert(ygor_data_logger* dl, const char* line)
+treadstone_atomic_add(ygor_data_logger* dl, const char* line, const char* field)
 {
     unsigned char* binary = NULL;
     size_t binary_sz = 0;
-    ygor_data_record dr;
-
-    // benchmark json->binary
-    dr.series = SERIES_JSON_TO_BINARY;
-    ygor_data_logger_start(dl, &dr);
 
     if (treadstone_json_to_binary(line, &binary, &binary_sz) < 0)
     {
@@ -46,6 +41,71 @@ treadstone_convert(ygor_data_logger* dl, const char* line)
         return -1;
     }
 
+    e::guard g1 = e::makeguard(free, binary);
+    (void) g1;
+
+    // benchmark the atomic add, from a byte string of binary json, to another
+    // byte string of binary json
+    ygor_data_record dr;
+    dr.series = SERIES_ATOMIC_ADD;
+    ygor_data_logger_start(dl, &dr);
+
+    struct treadstone_transformer* trans = NULL;
+    trans = treadstone_transformer_create(binary, binary_sz);
+    e::guard g2 = e::makeguard(treadstone_transformer_destroy, trans);
+    (void) g2;
+
+    if (!trans)
+    {
+        std::cerr << "could not create treadstone transformer" << std::endl;
+        return -1;
+    }
+
+    unsigned char* value;
+    size_t value_sz;
+
+    if (treadstone_transformer_extract_value(trans, field, &value, &value_sz) < 0)
+    {
+        // doesn't have the field; skip it without error
+        return 0;
+    }
+
+    if (treadstone_binary_is_integer(value, value_sz) < 0)
+    {
+        // field is not integer
+        free(value);
+        return 0;
+    }
+
+    int64_t num = treadstone_binary_to_integer(value, value_sz);
+    free(value);
+    ++num;
+
+    if (treadstone_integer_to_binary(num, &value, &value_sz) < 0)
+    {
+        std::cerr << "could not convert integer to binary" << std::endl;
+        return -1;
+    }
+
+    if (treadstone_transformer_set_value(trans, field, value, value_sz) < 0)
+    {
+        std::cerr << "could not overwrite integer" << std::endl;
+        return -1;
+    }
+
+    free(value);
+    unsigned char* output = NULL;
+    size_t output_sz = 0;
+
+    if (treadstone_transformer_output(trans, &output, &output_sz) < 0)
+    {
+        std::cerr << "could not output binary" << std::endl;
+        return -1;
+    }
+
+    treadstone_transformer_destroy(trans);
+    g2.dismiss();
+    free(output);
     ygor_data_logger_finish(dl, &dr);
 
     if (ygor_data_logger_record(dl, &dr) < 0)
@@ -54,45 +114,11 @@ treadstone_convert(ygor_data_logger* dl, const char* line)
         return -1;
     }
 
-    // benchmark binary->json
-    dr.series = SERIES_BINARY_TO_JSON;
-    ygor_data_logger_start(dl, &dr);
-
-    char* json = NULL;
-
-    if (treadstone_binary_to_json(binary, binary_sz, &json) < 0)
-    {
-        std::cerr << "failure on binary->json conversion" << std::endl;
-        return -1;
-    }
-
-    ygor_data_logger_finish(dl, &dr);
-
-    if (ygor_data_logger_record(dl, &dr) < 0)
-    {
-        std::cerr << "data logger failed: " << strerror(errno) << std::endl;
-        return -1;
-    }
-
-    // benchmark size of resulting binary
-    dr.series = SERIES_BINARY_SIZE;
-    ygor_data_logger_start(dl, &dr);
-    dr.data = binary_sz;
-
-    if (ygor_data_logger_record(dl, &dr) < 0)
-    {
-        std::cerr << "data logger failed: " << strerror(errno) << std::endl;
-        return -1;
-    }
-
-    // cleanup
-    free(binary);
-    free(json);
     return 0;
 }
 
 int
 main(int argc, const char* argv[])
 {
-    return common_convert(argc, argv, treadstone_convert);
+    return common_atomic_add(argc, argv, treadstone_atomic_add);
 }
