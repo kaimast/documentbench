@@ -98,31 +98,3 @@ class MongoDB(Experiment):
     def reset(self):
         self.clean()
         self.start()
-
-
-"""
-def initiate_mongo_replicaset(host, setname):
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(host, username=USERNAME)
-    stdin, stdout, stderr = ssh.exec_command(
-        '''echo 'rs.initiate()' | %s %s:27018/admin''' \
-        % (MONGO, host))
-    stdin.flush()
-    return (ssh, stdin, stdout, stderr)
-
-def add_shard(host, setname):
-    print 'Adding shard %s/%s' % (setname, host)
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(host, username=USERNAME)
-    stdin, stdout, stderr = ssh.exec_command(
-        '''echo 'db.runCommand( { addshard : "%s/%s:27018" } );' \
-           | %s %s:27017/admin''' \
-        % (setname, host, MONGO, host))
-    stdin.flush()
-    print_stdout_stderr(stdout, stderr)
-    ssh.close()
-    print
-
-"""

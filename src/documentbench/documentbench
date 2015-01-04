@@ -62,17 +62,17 @@ class DocumentBench(object):
 
     def do_add(self, docidx):
         start = nanos()
-        self.bench.update({'_id' :  EntryPrefix + str(i)}, {'$inc' : {'elem50' : 10}})
+        self.bench.update({'_id' :  self.params.prefix + str(docidx)}, {'$inc' : {'elem50' : 10}})
         self.dl.record(SERIES_ATOMIC_ADD, start, nanos() - start)
 
     def do_delete(self, docidx):
         start = nanos()
-        self.bench.remove({'_id' : EntryPrefix + str(i)})
+        self.bench.remove({'_id' : self.params.prefix + str(docidx)})
         self.dl.record(SERIES_DELETE, start, nanos() - start)
 
     def do_set(self, docidx):
         start = nanos()
-        self.bench.update({'_id': EntryPrefix + str(i)}, {'$set' : {'newelem' : 10}})
+        self.bench.update({'_id': self.params.prefix + str(docidx)}, {'$set' : {'newelem' : 10}})
         self.dl.record(SERIES_SET, start, nanos() - start)
 
     def do_put(self, docidx):

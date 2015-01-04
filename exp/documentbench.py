@@ -24,3 +24,40 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
+import time
+
+from ygor import Experiment
+from ygor import Host
+from ygor import Parameter
+from ygor import Environment
+from ygor import Utility
+
+
+class DocumentBench(Experiment):
+
+    HOST = Host('host')
+
+    SYSTEM     = Parameter('hyperdex')
+    WORKLOAD   = Parameter('put')
+    DOCUMENTS  = Parameter(100000)
+    OPERATIONS = Parameter(100000)
+
+    # Connect to the cluster
+    CLUSTER_HOST = Environment('127.0.0.1')
+    CLUSTER_PORT = Environment('1982')
+
+    def cluster(self):
+        args = ('documentbench',
+                '--host', self.CLUSTER_HOST,
+                '--port', self.CLUSTER_PORT,
+                '--system', self.SYSTEM,
+                '--output', 'benchmark.dat.bz2',
+                '--documents', self.DOCUMENTS,
+                '--operations', self.OPERATIONS)
+        if str(self.WORKLOAD) == 'load':
+            args += ('--action', 'load')
+        else:
+            args += ('--action', 'run', '--operation', self.WORKLOAD)
+        self.HOST.run(args)
+        self.HOST.collect('benchmark.dat.bz2')
