@@ -18,6 +18,7 @@ SERIES_ATOMIC_ADD = 1
 SERIES_DELETE = 2
 SERIES_SET = 3
 SERIES_PUT = 4
+SERIES_DOC_SIZE = 5
 
 
 def nanos():
@@ -42,6 +43,12 @@ class DocumentBench(object):
 
     def flush(self):
         self.dl.flush_and_destroy()
+
+    def load(self):
+        for x in range(self.params.documents):
+            if x % 1000 == 0:
+                print 'done', x
+            self.do_put(x)
 
     def run(self):
         if not hasattr(self, 'do_' + self.params.operation):
@@ -87,6 +94,7 @@ class MongoDocumentBench(DocumentBench):
     def __init__(self, host, port, output, args):
         super(MongoDocumentBench, self).__init__(output, args)
         self.db = pymongo.MongoClient(host, port)
+        self.db.write_concern = {'w': 1, 'wtimeout': 1000}
         self.bench = self.db.test.bench
 
 
@@ -95,6 +103,7 @@ def main(argv):
     parser.add_argument('--host', type=str, default='127.0.0.1')
     parser.add_argument('--port', type=int, default=1982)
     parser.add_argument('--system', type=str, choices=('hyperdex', 'mongodb'), default='hyperdex')
+    parser.add_argument('--action', type=str, choices=('load', 'run'), default='run')
     parser.add_argument('--output', type=str, default='benchmark.dat.bz2')
     parser.add_argument('--documents', type=int, default=1000000)
     parser.add_argument('--operations', type=int, default=1000000)
@@ -110,7 +119,10 @@ def main(argv):
     systems = {'hyperdex': HyperDexDocumentBench,
                'mongodb': MongoDocumentBench}
     bench = systems[args.system](args.host, args.port, args.output, args)
-    bench.run()
+    if args.action == 'load':
+        bench.load()
+    if args.action == 'run':
+        bench.run()
     bench.flush()
 
 
