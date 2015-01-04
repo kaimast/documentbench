@@ -1,0 +1,129 @@
+#!/usr/bin/env python2
+
+# Code written by Kai Mast
+# Modified to be a one-file program by Robert Escriva
+# Credit to the former; bugs to the latter
+
+
+
+# How Many Calls are made per run?
+NumCalls = 1000
+
+# How Many Warm-up Calls are made per run?
+NumWarmup = 100
+
+# How many documents are in the database initially? 
+NumDocuments = 100*1000
+
+# How many runs per benchmark? 
+NumRuns = 20 
+
+EntryPrefix = "entry"
+NewEntryPrefix = "newentry"
+
+assert EntryPrefix != ""
+assert NewEntryPrefix != ""
+assert EntryPrefix != NewEntryPrefix
+assert NumDocuments > 0
+assert NumCalls+NumWarmup < NumDocuments
+
+
+import numpy
+
+def create_document(prefix, count):
+        doc = {'_id' : prefix + str(count)}
+        num_elems = numpy.random.poisson(1000)
+
+        for i in range(num_elems):
+                doc['elem' + str(i)] = i
+
+
+
+
+from numpy.random import zipf
+from common.globals import NumDocuments
+
+def get_random_accesses(amount):
+        return zipf(NumDocuments, amount)
+
+import numpy
+
+def create_document(prefix, count):
+        doc = {'_id' : prefix + str(count)}
+        num_elems = numpy.random.poisson(1000)
+
+        for i in range(num_elems):
+                doc['elem' + str(i)] = i
+
+        return doc
+
+
+
+from hyperdex_async.atomic_add import AtomicAdd
+from hyperdex_async.set_element import SetElement
+from hyperdex_async.put_document import PutDocument
+from hyperdex_async.delete_document import DeleteDocument
+
+
+from sys import argv
+from time import sleep
+
+address = argv[1]
+port = int(argv[2])
+
+if len(argv) is not 3:
+        raise ValueError("Wrong amount of arguments given!")
+
+def run_bench(bench):
+     print bench.name()
+
+     bench.setup(address, port)
+     bench.clean()
+
+     for n in range(0, NumRuns, 1):
+        bench.prepare()
+        sleep(5)
+        
+        bench.warmup()
+        result = bench.run()
+        print str(result)
+
+        bench.clean()
+        sleep(5)   
+
+run_bench(AtomicAdd())
+run_bench(SetElement())
+run_bench(PutDocument())
+run_bench(DeleteDocument())
+
+
+
+#! /usr/bin/python
+
+from hyperdex_async.hyperdex_bench import HyperdexBench
+from common.globals import EntryPrefix
+
+# Run
+class AtomicAdd(HyperdexBench):
+        def do_bench_call(self, i):
+                return self.space.async_atomic_add(EntryPrefix + str(i), {'elem50' : 10})
+
+        def name(self): 
+                return "Atomic Add"
+
+
+#! /usr/bin/python
+
+from mongo_blocking.mongo_blocking_bench import MongoBlockingBench
+from common.globals import EntryPrefix
+
+# Run
+class AtomicAdd(MongoBlockingBench):
+        def do_bench_call(self, i):
+                self.db.bench.update({'_id' :  EntryPrefix + str(i)}, {'$inc' : {'elem50' : 10}},  w=1)
+
+        def name(self): 
+                return "Atomic Add"
+
+
+
