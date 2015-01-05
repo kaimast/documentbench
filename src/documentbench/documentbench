@@ -48,7 +48,7 @@ class DocumentBench(object):
         for x in range(self.params.documents):
             if x % 1000 == 0:
                 print 'done', x
-            self.do_put(x)
+            self.do_ins(x)
 
     def run(self):
         if not hasattr(self, 'do_' + self.params.operation):
@@ -75,6 +75,12 @@ class DocumentBench(object):
         self.bench.update({'_id': self.params.prefix + str(docidx)}, {'$set' : {'newelem' : 10}})
         self.dl.record(SERIES_SET, start, nanos() - start)
 
+    def do_ins(self, docidx):
+        doc = create_document(self.params.prefix, docidx)
+        start = nanos()
+        self.bench.save(doc)
+        self.dl.record(SERIES_PUT, start, nanos() - start)
+
     def do_put(self, docidx):
         doc = create_document(self.params.new_prefix, docidx)
         start = nanos()
@@ -94,7 +100,7 @@ class MongoDocumentBench(DocumentBench):
     def __init__(self, host, port, output, args):
         super(MongoDocumentBench, self).__init__(output, args)
         self.db = pymongo.MongoClient(host, port)
-        self.db.write_concern = {'w': 1, 'wtimeout': 1000}
+        self.db.write_concern = {'w': 1, 'wtimeout': 100000}
         self.bench = self.db.test.bench
 
 
