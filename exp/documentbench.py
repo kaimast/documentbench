@@ -28,7 +28,7 @@
 import time
 
 from ygor import Experiment
-from ygor import Host
+from ygor import HostSet
 from ygor import Parameter
 from ygor import Environment
 from ygor import Utility
@@ -36,28 +36,33 @@ from ygor import Utility
 
 class DocumentBench(Experiment):
 
-    HOST = Host('host')
+    HOSTS = HostSet('hosts')
 
     SYSTEM     = Parameter('hyperdex')
     WORKLOAD   = Parameter('put')
-    DOCUMENTS  = Parameter(100000)
-    OPERATIONS = Parameter(100000)
+    DOCUMENTS  = Parameter(500000)
+    OPERATIONS = Parameter(1000000)
 
     # Connect to the cluster
     CLUSTER_HOST = Environment('127.0.0.1')
     CLUSTER_PORT = Environment('1982')
 
     def cluster(self):
+        output = HostSet.Index(lambda x: 'benchmark-{0}.dat.bz2'.format(x))
+        CLIENTS = 50
         args = ('documentbench',
                 '--host', self.CLUSTER_HOST,
                 '--port', self.CLUSTER_PORT,
                 '--system', self.SYSTEM,
-                '--output', 'benchmark.dat.bz2',
-                '--documents', self.DOCUMENTS,
-                '--operations', self.OPERATIONS)
+                '--output', output,
+                '--documents', self.DOCUMENTS)
         if str(self.WORKLOAD) == 'load':
-            args += ('--action', 'load')
+            per_host = (self.DOCUMENTS.as_int() / CLIENTS)
+            args += ('--action', 'load',
+                     '--load-start', HostSet.Index(lambda x: per_host * x),
+                     '--load-limit', HostSet.Index(lambda x: per_host * (x + 1)))
         else:
-            args += ('--action', 'run', '--operation', self.WORKLOAD)
-        self.HOST.run(args)
-        self.HOST.collect('benchmark.dat.bz2')
+            args += ('--action', 'run', '--operation', self.WORKLOAD,
+                     '--operations', self.OPERATIONS.as_int() / CLIENTS)
+        self.HOSTS.run_many(args, number=CLIENTS)
+        self.HOSTS.collect('benchmark.dat.bz2', output, number=CLIENTS)

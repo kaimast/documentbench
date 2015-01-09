@@ -45,9 +45,9 @@ class DocumentBench(object):
         self.dl.flush_and_destroy()
 
     def load(self):
-        for x in range(self.params.documents):
-            if x % 1000 == 0:
-                print 'done', x
+        start = self.params.load_start or 0
+        limit = self.params.load_limit or self.params.documents
+        for x in range(start, limit):
             self.do_ins(x)
 
     def run(self):
@@ -55,8 +55,6 @@ class DocumentBench(object):
             raise RuntimeError("No operation type %s" % self.params.operation)
         op = getattr(self, 'do_' + self.params.operation)
         for x in range(self.params.operations):
-            if x % 1000 == 0:
-                print 'done', x
             docidx = random.randint(0, self.params.documents - 1)
             op(docidx)
 
@@ -100,7 +98,7 @@ class MongoDocumentBench(DocumentBench):
     def __init__(self, host, port, output, args):
         super(MongoDocumentBench, self).__init__(output, args)
         self.db = pymongo.MongoClient(host, port)
-        self.db.write_concern = {'w': 1, 'wtimeout': 100000}
+        self.db.write_concern = {'w': 2, 'wtimeout': 100000}
         self.bench = self.db.test.bench
 
 
@@ -116,6 +114,8 @@ def main(argv):
     parser.add_argument('--operation', type=str, choices=('put', 'set', 'add', 'delete'), default='put')
     parser.add_argument('--prefix', type=str, default='entry')
     parser.add_argument('--new-prefix', type=str, default='newentry')
+    parser.add_argument('--load-start', type=int)
+    parser.add_argument('--load-limit', type=int)
     args = parser.parse_args(argv[1:])
     assert(args.prefix != '')
     assert(args.new_prefix != '')
@@ -133,5 +133,18 @@ def main(argv):
 
 
 if __name__ == '__main__':
+    import os
+    import struct
     import sys
+    random.seed(struct.unpack('>Q', os.urandom(8))[0])
     main(sys.argv)
+    #import json
+    #import scipy
+    #lengths = []
+    #fields = []
+    #for x in range(1000):
+    #    doc = create_document("entry", x)
+    #    s = json.dumps(doc)
+    #    lengths.append(len(s))
+    #    fields.append(len(doc))
+    #print scipy.mean(lengths), scipy.mean(fields)
